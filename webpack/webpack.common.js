@@ -50,7 +50,9 @@ module.exports = {
     ]
   },
   plugins: [
-    new OfflinePlugin(),
+    new OfflinePlugin({
+      externals: ['/']
+    }),
     new HtmlWebpackPlugin({
       template: path.resolve('./index.html')
     }),
