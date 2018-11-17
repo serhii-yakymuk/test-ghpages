@@ -1,74 +1,117 @@
-import './style/main.scss';
-import 'windowise/src/sass/style.scss';
-import firebase from 'firebase/app';
-import 'firebase/auth';
-import 'firebase/database';
-import 'firebase/storage';
-import Auth from './scripts/auth';
-import Api from './scripts/api';
-import config from './scripts/firebase-config';
-import * as Services from './scripts/services';
-import CollectionList from './scripts/collection-list';
-import { library, dom } from '@fortawesome/fontawesome-svg-core';
-import {
-  faEdit,
-  faPlus,
-  faSignOutAlt,
-  faSignInAlt,
-  faTrashAlt,
-  faUserPlus
-} from '@fortawesome/free-solid-svg-icons/index';
+import * as OfflinePluginRuntime from 'offline-plugin/runtime';
+import './style.scss';
 
+OfflinePluginRuntime.install();
 
-library.add(faEdit, faPlus, faSignOutAlt, faSignInAlt, faTrashAlt, faUserPlus );
-dom.watch();
+const $gradientBlock = document.getElementById('gradient-here');
 
-const $signOutBtn = document.getElementById('sign-out');
-const $detailsUser = document.getElementById('details-user');
-const $loginWrapper = document.getElementById('login-wrapper');
-const $collectionWrapper = document.getElementById('collection-wrapper');
-const $details = document.getElementById('details');
+document.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('gradient-direction').style.display = 'none';
+  $gradientBlock.style.backgroundImage = setGradient($gradientBlock);
 
-const auth = new Auth();
-const api = new Api();
+  document.getElementById('add-color-btn').addEventListener('click', addColor);
+  document.getElementById('toggle-btn').addEventListener('click', toggle);
+  document.getElementById('get-css-btn').addEventListener('click', getCss);
+  Array.from(document.getElementsByClassName('gg-colors-list__input'))
+    .forEach(el => el.addEventListener('input', () => setGradient($gradientBlock)));
+});
 
-const verifyUser = () => {
-  firebase
-    .auth()
-    .onAuthStateChanged( user => {
-      if (user) {
-        Services.showContent($details);
-        Services.showContent($collectionWrapper);
-        Services.hideContent($loginWrapper);
-
-        $detailsUser.innerText = user.displayName;
-
-        const loginRef = firebase.database().ref('users');
-        const userLoginRef = loginRef.child(user.uid);
-        const userLoginInfoCollectionRef = userLoginRef.child('info');
-
-        userLoginInfoCollectionRef.set({
-          email: user.email,
-          emailVerified: user.emailVerified
-        });
-
-        api.fetchCollections(user.uid, collections => {
-          const collectionList = new CollectionList();
-          collectionList.render(collections, user.uid);
-        });
-
-        $signOutBtn.addEventListener('click', event => {
-          auth.signOut(event);
-        });
-      } else {
-        auth.render();
-      }
-    });
+const toggle = () => {
+  const $toggleBtn = event.target;
+  $toggleBtn.style.outline = 'none';
+  const $radial = document.getElementById('radial');
+  const $linear = document.getElementById('linear');
+  const $direction = document.getElementById('gradient-direction');
+  if ($toggleBtn.classList.contains('toggle-linear')) {
+    $toggleBtn.classList.replace('toggle-linear', 'toggle-radial');
+    $linear.classList.replace('gg-toggle__gradient-type--on', 'gg-toggle__gradient-type--off');
+    $radial.classList.replace('gg-toggle__gradient-type--off', 'gg-toggle__gradient-type--on');
+    $direction.style.display = 'none';
+  } else {
+    $toggleBtn.classList.replace('toggle-radial', 'toggle-linear');
+    $radial.classList.replace('gg-toggle__gradient-type--on', 'gg-toggle__gradient-type--off');
+    $linear.classList.replace('gg-toggle__gradient-type--off', 'gg-toggle__gradient-type--on');
+    $direction.style.display = 'block';
+  }
+  setGradient($gradientBlock);
 };
 
-const init = () => {
-  firebase.initializeApp(config);
-  verifyUser();
+document.getElementById('degree-input').addEventListener('input', function () {
+  const degreeVal = document.getElementById('degree-input').value;
+  const $valLable = document.getElementById('degree-value');
+  $valLable.textContent = degreeVal;
+  setGradient($gradientBlock);
+});
+
+const addColor = () => {
+  const $colorsList = document.getElementById('gg-colors-list');
+
+  const $li = document.createElement('li');
+  $li.classList.add('gg-colors-list__item');
+
+  const $colorInput = document.createElement('input');
+  $colorInput.classList.add('gg-colors-list__input');
+  $colorInput.type = 'color';
+  $colorInput.value = '#f6f6f6';
+
+  const $removeBtn = document.createElement('i');
+  $removeBtn.classList.add('fas' , 'fa-times' , 'gg-colors-list__remove-btn');
+
+  $li.appendChild($removeBtn);
+  $li.appendChild($colorInput);
+  $colorsList.appendChild($li);
+  setGradient($gradientBlock);
+  $colorInput.addEventListener('input', () => setGradient($gradientBlock));
 };
 
-init();
+const colorsList = document.getElementById('gg-colors-list');
+colorsList.addEventListener('click' , event => {
+  const {target} = event;
+  const isRemoveBtn = target.classList.contains('gg-colors-list__remove-btn');
+  const $list = target.parentElement.parentElement;
+  const $item = target.parentElement;
+  if (isRemoveBtn){
+    $list.removeChild($item);
+  }
+  setGradient($gradientBlock);
+});
+
+const setGradient = whereToSet =>{
+  whereToSet.style.backgroundImage = `${getGradient()}`;
+  $gradientBlock.innerHTML = '';
+};
+
+const getGradient = () => {
+  const degreeValue = document.getElementById('degree-input').value;
+  const isRadial = document.getElementById('radial').classList
+    .contains('gg-toggle__gradient-type--on');
+  const colors = getColors();
+
+  let gradient = '';
+
+  let gradientType;
+  isRadial ? gradientType = 'radial-gradient' : gradientType = 'linear-gradient';
+
+  const colorList = colors.join(' , ');
+
+  isRadial
+    ? gradient = `${gradientType}( ${colorList} )`
+    : gradient = `${gradientType}( ${degreeValue}deg , ${colorList} )`;
+  return gradient;
+};
+
+const getColors = () => {
+  const colorInputs = Array.from(document.getElementsByClassName('gg-colors-list__input'));
+  return colorInputs.map(item =>{
+    return item.value;
+  });
+};
+
+const getCss = () =>{
+  const $back = document.getElementById('main');
+  setGradient($back);
+  $gradientBlock.style.background = 'linear-gradient(169deg, #333, #777)';
+  let gradient = getGradient();
+  gradient = `background: -moz-${gradient} background: -webkit-${gradient} background: ${gradient}`;
+  $gradientBlock.innerText = gradient;
+};

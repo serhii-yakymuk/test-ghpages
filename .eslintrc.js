@@ -33,8 +33,7 @@ module.exports = {
         {
           "ignoreTrailingComments": true,
           "ignoreComments": true,
-          "code": 120,
-          "ignoreRegExpLiterals": true,
+          "code": 100
         }
       ],
       "linebreak-style": [
@@ -53,7 +52,6 @@ module.exports = {
       "keyword-spacing": ["error", {"before": true, "after": true}],
       "new-cap": ["error", { "newIsCap": true }],
       "no-var": ["error"],
-      "no-useless-escape": "off",
       "prefer-const": "error",
       "one-var": ["error", "never"],
       "space-infix-ops": "error",
