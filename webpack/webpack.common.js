@@ -51,7 +51,7 @@ module.exports = {
   },
   plugins: [
     new OfflinePlugin({
-      externals: ['./']
+      externals: ['./', 'https://use.fontawesome.com/releases/v5.4.2/css/all.css']
     }),
     new HtmlWebpackPlugin({
       template: path.resolve('./index.html')
